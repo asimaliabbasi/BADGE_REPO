@@ -1,0 +1,8 @@
+0 Confident
+1 Defence
+2 Hand Raised
+3 Salute
+4 Think
+5 Stop
+6 Surrender
+7 Thank You

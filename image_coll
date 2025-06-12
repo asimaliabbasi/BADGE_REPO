@@ -1,0 +1,83 @@
+import cv2
+import mediapipe as mp
+import os
+import numpy as np
+from datetime import datetime
+
+# Define the pose class (change this for each new pose)
+CLASS_NAME = "Think"  # Change to "T-Pose", "Wave", etc.
+
+# Setup save directory
+SAVE_DIR = os.path.join("data", CLASS_NAME)
+os.makedirs(SAVE_DIR, exist_ok=True)
+
+# MediaPipe initialization
+mp_pose = mp.solutions.pose
+pose = mp_pose.Pose()
+mp_drawing = mp.solutions.drawing_utils
+
+# Drawing style for white background
+BLACK_LANDMARK = mp_drawing.DrawingSpec(color=(0, 0, 0), thickness=3)
+BLACK_CONNECTION = mp_drawing.DrawingSpec(color=(80, 80, 80), thickness=2)
+
+cap = cv2.VideoCapture(0)
+
+print(f"Collecting: {CLASS_NAME} poses (white background only)")
+print("Press 's' to save, 'q' to quit")
+
+count = 0
+while True:
+    # Read camera feed
+    ret, frame = cap.read()
+    if not ret:
+        break
+    
+    # Create white background canvas
+    white_bg = np.full(frame.shape, 255, dtype=np.uint8)
+    
+    # Process frame for pose detection
+    results = pose.process(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
+    
+    # If pose detected
+    if results.pose_landmarks:
+        # Draw pose on white background (this is what gets saved)
+        mp_drawing.draw_landmarks(
+            white_bg,
+            results.pose_landmarks,
+            mp_pose.POSE_CONNECTIONS,
+            landmark_drawing_spec=BLACK_LANDMARK,
+            connection_drawing_spec=BLACK_CONNECTION
+        )
+        
+        # Draw pose on camera feed (for reference only)
+        mp_drawing.draw_landmarks(
+            frame,
+            results.pose_landmarks,
+            mp_pose.POSE_CONNECTIONS,
+            landmark_drawing_spec=mp_drawing.DrawingSpec(color=(0, 255, 0), thickness=2),
+            connection_drawing_spec=mp_drawing.DrawingSpec(color=(0, 255, 0), thickness=1)
+        )
+    
+    # Display both windows
+    cv2.imshow("Camera Feed (Reference)", frame)
+    cv2.imshow("Pose to Save (White BG)", white_bg if results.pose_landmarks else frame)
+    
+    # Key controls
+    key = cv2.waitKey(1)
+    if key == ord('s'):
+        if results.pose_landmarks:
+            filename = f"{CLASS_NAME}_{count:04d}.jpg"
+            cv2.imwrite(os.path.join(SAVE_DIR, filename), white_bg)
+            print(f"Saved: {filename}")
+            count += 1
+            # Flash effect on save
+            flash = cv2.addWeighted(frame, 1.5, np.zeros_like(frame), 0, 0)
+            cv2.imshow("Camera Feed (Reference)", flash)
+        else:
+            print("No pose detected!")
+    elif key == ord('q'):
+        break
+
+print(f"\nFinished! Saved {count} {CLASS_NAME} poses")
+cap.release()
+cv2.destroyAllWindows()
