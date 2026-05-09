@@ -5,7 +5,7 @@ import numpy as np
 from datetime import datetime
 
 # Define the pose class (change this for each new pose)
-CLASS_NAME = "Think"  # Change to "T-Pose", "Wave", etc.
+CLASS_NAME = "Fuck_Bitch"  # Change to "T-Pose", "Wave", etc.
 
 # Setup save directory
 SAVE_DIR = os.path.join("data", CLASS_NAME)
